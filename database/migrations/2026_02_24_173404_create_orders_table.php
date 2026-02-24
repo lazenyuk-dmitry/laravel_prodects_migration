@@ -13,16 +13,24 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('g_number')->unique(); // Уникальный номер заказа
+            $table->string('g_number')->unique();
             $table->dateTime('date');
-            $table->string('last_change_date');
+            $table->date('last_change_date');
             $table->string('supplier_article');
             $table->string('tech_size');
-            $table->string('barcode');
+            $table->bigInteger('barcode');
             $table->decimal('total_price', 10, 2);
             $table->integer('discount_percent');
             $table->string('warehouse_name');
-            $table->string('nm_id'); // Артикул WB
+            $table->string('oblast')->nullable();
+            $table->bigInteger('income_id')->nullable();
+            $table->string('odid')->nullable();
+            $table->bigInteger('nm_id')->nullable();
+            $table->string('subject')->nullable();
+            $table->string('category')->nullable();
+            $table->string('brand')->nullable();
+            $table->boolean('is_cancel')->default(false);
+            $table->dateTime('cancel_dt')->nullable();
             $table->timestamps();
         });
     }
