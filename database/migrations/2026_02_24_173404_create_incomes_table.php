@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('number')->nullable(); // Номер УПД или накладной
 
             // Связи
-            $table->unsignedBigInteger('barcode')->index();
-            $table->unsignedBigInteger('nm_id')->index();
+            $table->string('barcode')->index();
+            $table->string('nm_id')->index();
 
             // Даты
             $table->date('date'); // Дата создания

@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
 
             // Поля идентификации
-            $table->unsignedBigInteger('nm_id')->index();
+            $table->string('nm_id')->index();
             $table->string('warehouse_name')->index();
-            $table->unsignedBigInteger('barcode')->index();
+            $table->string('barcode')->index();
 
             // Данные об остатках
             $table->integer('quantity')->default(0);

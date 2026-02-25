@@ -19,8 +19,8 @@ return new class extends Migration
 
             // Внешние ключи и идентификаторы
             $table->string('g_number');
-            $table->unsignedBigInteger('barcode')->index();
-            $table->unsignedBigInteger('nm_id')->index();
+            $table->string('barcode')->index();
+            $table->string('nm_id')->index();
             $table->integer('income_id')->default(0);
             $table->string('odid')->nullable();
 

@@ -69,14 +69,16 @@ class SyncWbService
         $currentPage = 1;
         $lastPage = 1;
 
+        $params = $this->applyParamsFormat($path, $params);
+
         while ($lastPage - $currentPage >= 0) {
             $this->log("Загружаю страницу: " . $currentPage);
 
             $response = Http::retry(3, 100)
                 ->timeout(10)
                 ->get("{$this->host}/api/{$path}", [
-                    'dateFrom' => Carbon::parse($params['dateFrom'])->format($this-> dateFromFormat),
-                    'dateTo' => Carbon::parse($params['dateTo'])->format($this-> dateToFormat),
+                    'dateFrom' => $params['dateFrom'],
+                    'dateTo' => $params['dateTo'],
                     'key' => $this->token,
                     'limit' => $params['limit'],
                     'page' => $currentPage,
@@ -102,7 +104,7 @@ class SyncWbService
             $currentPage++;
 
             if ($total - $fetched > 0) {
-                sleep(1); // 1 сек
+                sleep(0.5); // сек
             } else {
                 $this->log("=== Загрузка завершена: {$path} === \n");
             }
@@ -125,6 +127,32 @@ class SyncWbService
             'incomes' => ['income_id', 'barcode'],
             default   => ['id']
         };
+    }
+
+    private function applyParamsFormat(string $path, array $params): array
+    {
+        $minDate = match($path) {
+            'stocks' => now(),
+            default => null
+        };
+
+        $params['dateFrom'] = Carbon::parse($params['dateFrom'])->format($this-> dateFromFormat);
+        $params['dateTo'] = Carbon::parse($params['dateTo'])->format($this-> dateToFormat);
+
+        if ($minDate) {
+            $inputDate = Carbon::parse($params['dateFrom']);
+
+            if ($inputDate->lessThan($minDate)) {
+                $params['dateFrom'] = $minDate->format($this->dateFromFormat);
+                $this->log("Дата 'dateFrom' для {$path} ограничена: " . $params['dateFrom']);
+            }
+        }
+
+        if ($path == 'incomes') {
+            $params['dateTo'] = Carbon::parse($params['dateTo'])->format($this->dateFromFormat);
+        }
+
+        return $params;
     }
 
     private function log(string $message, string $type = 'info'): void

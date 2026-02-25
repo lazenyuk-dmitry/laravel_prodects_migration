@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('g_number')->unique();
 
             // Внешние ключи
-            $table->unsignedBigInteger('barcode')->index();
-            $table->unsignedBigInteger('nm_id')->index();
+            $table->string('barcode')->index();
+            $table->string('nm_id')->index();
             $table->unsignedBigInteger('income_id')->nullable();
             $table->string('odid')->nullable();
 
