@@ -47,7 +47,7 @@ class SyncWbService
             : array_intersect_key($allEndpoints, [$type => '']);
 
         if (empty($this->endpoints)) {
-            $this->error("Ошибка: Тип '{$type}' не поддерживается.");
+            $this->log("Ошибка: Тип '{$type}' не поддерживается.", 'error');
             return;
         }
     }
@@ -74,8 +74,8 @@ class SyncWbService
         while ($lastPage - $currentPage >= 0) {
             $this->log("Загружаю страницу: " . $currentPage);
 
-            $response = Http::retry(3, 100)
-                ->timeout(10)
+            $response = Http::retry(3, 2000)
+                ->timeout(15)
                 ->get("{$this->host}/api/{$path}", [
                     'dateFrom' => $params['dateFrom'],
                     'dateTo' => $params['dateTo'],
@@ -99,12 +99,12 @@ class SyncWbService
             $this->update($path, $modelClass, $items);
 
             $this->log("Сохранено " . count($items) . " записей");
-            $this->log("Общий прогресс " . $fetched . "/" . $total);
+            $this->log("Общий прогресс {$path}: " . $fetched . "/" . $total);
 
             $currentPage++;
 
             if ($total - $fetched > 0) {
-                sleep(0.5); // сек
+                sleep(1); // сек
             } else {
                 $this->log("=== Загрузка завершена: {$path} === \n");
             }
@@ -112,6 +112,8 @@ class SyncWbService
     }
 
     private function update($path, $modelClass, $items) {
+        if (empty($items)) return;
+
         $modelClass::upsert(
             $items,
             $this->getUniqueKeys($path),

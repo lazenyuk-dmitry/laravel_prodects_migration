@@ -12,7 +12,9 @@
         "laravel/octane": "^1.5",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
-        "spiral/roadrunner": "^2.12"
+        "spiral/roadrunner": "^2.12",
+        "spiral/roadrunner-cli": "^2.7",
+        "spiral/roadrunner-http": "^2.2"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
