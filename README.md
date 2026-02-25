@@ -1,64 +1,112 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Laravel Products Migration
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Система синхронизации данных с Wildberries API (Orders, Sales, Stocks, Incomes).
 
-## About Laravel
+## Требования
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2+
+- Расширение pcntl (для RoadRunner)
+- MySQL 8.0+ / PostgreSQL
+- RoadRunner Binary
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Установка зависимостей
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+composer install
+```
 
-## Learning Laravel
+## Настройка окружения
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Настройка `.env`
 
-## Laravel Sponsors
+```bash
+APP_KEY=artisan_key
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+WB_API_HOST=host_url
+WB_API_KEY=api_key
 
-### Premium Partners
+# Можно запустить базу в докере локально
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=root
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+Можно запустить базу локально для демо
 
-## Contributing
+```bash
+docker-compose up --build -d
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Установка roadrunner
 
-## Code of Conduct
+```bash
+php artisan octane:install --server=roadrunner
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Миграции
 
-## Security Vulnerabilities
+```bash
+php artisan migrate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Запуск в терминале
 
-## License
+Это проще и лучше в этом примере так как если запускать в потокох то все равно все упирается в ограничения апи `429 Too Many Requests`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# например данные с 2000-01-01 по сегодня для всех эндпоинтов
+php artisan wb:sync --dateFrom=2000-01-01
+
+# или можно указать тип синхронизации
+php artisan wb:sync --dateFrom=2000-01-01 --type=orders
+```
+
+## Запуск в octane
+
+Сделать нормально в октане с какими то логами на страницу не так просто и быстро поэтому проверять нужно в логах.
+
+Запуск сервера
+
+```bash
+php artisan octane:start --server=roadrunner --workers=4
+```
+
+Заходим на урл `http://localhost:8000/api/sync`
+
+Проверяем логи в терминале
+
+```bash
+tail -f storage/logs/laravel.log
+```
+
+Увидим что то то типа
+
+```bash
+[2026-02-25 19:44:29] local.INFO: Общий прогресс orders: 3500/127121
+[2026-02-25 19:44:30] local.INFO: Загружаю страницу: 8
+[2026-02-25 19:44:30] local.INFO: Сохранено 500 записей
+[2026-02-25 19:44:30] local.INFO: Общий прогресс orders: 4000/127121
+[2026-02-25 19:44:31] local.INFO: Загружаю страницу: 9
+[2026-02-25 19:44:31] local.INFO: Сохранено 500 записей
+[2026-02-25 19:44:31] local.INFO: Общий прогресс orders: 4500/127121
+[2026-02-25 19:44:32] local.INFO: Загружаю страницу: 10
+[2026-02-25 19:44:33] local.INFO: Сохранено 500 записей
+[2026-02-25 19:44:33] local.INFO: Общий прогресс orders: 5000/127121
+[2026-02-25 19:44:34] local.INFO: Загружаю страницу: 11
+[2026-02-25 19:44:34] local.INFO: Сохранено 500 записей
+[2026-02-25 19:44:34] local.INFO: Общий прогресс orders: 5500/127121
+[2026-02-25 19:44:35] local.INFO: Загружаю страницу: 12
+[2026-02-25 19:44:35] local.INFO: Сохранено 500 записей
+[2026-02-25 19:44:35] local.INFO: Общий прогресс orders: 6000/127121
+[2026-02-25 19:44:36] local.INFO: Загружаю страницу: 13
+[2026-02-25 19:44:37] local.INFO: Сохранено 500 записей
+[2026-02-25 19:44:37] local.INFO: Общий прогресс orders: 6500/127121
+```
