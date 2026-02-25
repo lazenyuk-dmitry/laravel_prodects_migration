@@ -13,12 +13,33 @@ return new class extends Migration
     {
         Schema::create('incomes', function (Blueprint $table) {
             $table->id();
-            $table->integer('income_id');
-            $table->string('number'); // Номер УПД
-            $table->date('date');
-            $table->string('nm_id');
+
+            // Уникальный ID поставки (из API)
+            $table->unsignedBigInteger('income_id');
+            $table->string('number')->nullable(); // Номер УПД или накладной
+
+            // Связи
+            $table->unsignedBigInteger('barcode')->index();
+            $table->unsignedBigInteger('nm_id')->index();
+
+            // Даты
+            $table->date('date'); // Дата создания
+            $table->date('last_change_date');
+            $table->date('date_close')->nullable(); // Дата закрытия поставки
+
+            // Товар и количество
+            $table->string('supplier_article');
+            $table->string('tech_size');
             $table->integer('quantity');
+            $table->decimal('total_price', 12, 2)->default(0);
+
+            $table->string('warehouse_name');
+
             $table->timestamps();
+
+            // Создаем уникальный индекс для upsert
+            // Одна поставка может содержать разные товары (баркуоды)
+            $table->unique(['income_id', 'barcode'], 'incomes_unique_index');
         });
     }
 

@@ -13,24 +13,37 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+
+            // Уникальный номер заказа из API
             $table->string('g_number')->unique();
-            $table->dateTime('date');
+
+            // Внешние ключи
+            $table->unsignedBigInteger('barcode')->index();
+            $table->unsignedBigInteger('nm_id')->index();
+            $table->unsignedBigInteger('income_id')->nullable();
+            $table->string('odid')->nullable();
+
+            // Даты
+            $table->dateTime('date'); // Здесь приходит и дата и время
             $table->date('last_change_date');
+            $table->dateTime('cancel_dt')->nullable(); // Дата отмены
+
+            // Товар
             $table->string('supplier_article');
             $table->string('tech_size');
-            $table->bigInteger('barcode');
-            $table->decimal('total_price', 10, 2);
+            $table->string('subject');
+            $table->string('category');
+            $table->string('brand');
+
+            // Финансы
+            $table->decimal('total_price', 12, 2);
             $table->integer('discount_percent');
+
+            // География и статус
             $table->string('warehouse_name');
-            $table->string('oblast')->nullable();
-            $table->bigInteger('income_id')->nullable();
-            $table->string('odid')->nullable();
-            $table->bigInteger('nm_id')->nullable();
-            $table->string('subject')->nullable();
-            $table->string('category')->nullable();
-            $table->string('brand')->nullable();
+            $table->string('oblast');
             $table->boolean('is_cancel')->default(false);
-            $table->dateTime('cancel_dt')->nullable();
+
             $table->timestamps();
         });
     }

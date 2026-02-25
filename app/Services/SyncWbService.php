@@ -110,23 +110,20 @@ class SyncWbService
     }
 
     private function update($path, $modelClass, $items) {
-        $uniqueKeys = array_keys($this->getUniqueKeys($path, $items[0]));
-        $updateKeys = array_keys($items[0]);
-
         $modelClass::upsert(
             $items,
-            $updateKeys,
+            $this->getUniqueKeys($path),
             array_keys($items[0])
         );
     }
 
-    private function getUniqueKeys($path, $item) {
+    private function getUniqueKeys($path) {
         return match($path) {
-            'orders'  => ['g_number' => $item['g_number']],
-            'sales'   => ['sale_id' => $item['sale_id'] ?? $item['g_number']],
-            'stocks'  => ['nm_id' => $item['nm_id'], 'warehouse_name' => $item['warehouse_name']],
-            'incomes' => ['income_id' => $item['income_id']],
-            default   => ['id' => $item['id'] ?? null]
+            'orders'  => ['g_number'],
+            'sales'   => ['sale_id', 'g_number'],
+            'stocks'  => ['nm_id', 'warehouse_name', 'barcode'],
+            'incomes' => ['income_id', 'barcode'],
+            default   => ['id']
         };
     }
 
