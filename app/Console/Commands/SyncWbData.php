@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
 use App\Models\Order;
 use App\Models\Sale;
 use App\Models\Stock;
@@ -11,21 +12,46 @@ use App\Models\Income;
 
 class SyncWbData extends Command
 {
-    protected $signature = 'wb:sync';
+    protected $signature = 'wb:sync
+                        {--dateFrom= : Дата в формате YYYY-MM-DD}
+                        {--dateTo= : Дата в формате YYYY-MM-DD}
+                        {--type=all : Тип данных (orders, sales, stocks, incomes или all)}
+                        {--limit=500 : Лимит загрузки данных за один запрос (max 1000)}';
+
     protected $description = 'Стянуть все данные через пагинацию API в БД';
+
+    private $dateFromFormat = 'Y-m-d';
+    private $dateToFormat = 'Y-m-d H:i:s';
 
     public function handle()
     {
-        $dateFrom = '2026-02-23'; // Можно вынести в настройки
+        $dateFrom = $this->option('dateFrom')
+            ? Carbon::parse($this->option('dateFrom'))->format($this-> dateFromFormat)
+            : now()->subYears(2)->format($this-> dateFromFormat);
+        $dateTo = $this->option('dateTo')
+            ? Carbon::parse($this->option('dateTo'))->format($this-> dateToFormat)
+            : now()->format($this-> dateToFormat);
+        $type = $this->option('type');
+        $limit = $this->option('limit');
+
         $token = env('WB_API_KEY');
         $host = env('WB_API_HOST');
 
-        $endpoints = [
+        $allEndpoints = [
             'orders'  => Order::class,
-            // 'sales'   => Sale::class,
-            // 'stocks'  => Stock::class,
-            // 'incomes' => Income::class,
+            'sales'   => Sale::class,
+            'stocks'  => Stock::class,
+            'incomes' => Income::class,
         ];
+
+        $endpoints = ($type === 'all')
+            ? $allEndpoints
+            : array_intersect_key($allEndpoints, [$type => '']);
+
+        if (empty($endpoints)) {
+            $this->error("Ошибка: Тип '{$type}' не поддерживается.");
+            return;
+        }
 
         foreach ($endpoints as $path => $modelClass) {
             $this->info("=== Начинаю загрузку: {$path} ===");
@@ -40,9 +66,9 @@ class SyncWbData extends Command
                     ->timeout(10)
                     ->get("{$host}/api/{$path}", [
                         'dateFrom' => $dateFrom,
-                        'dateTo' => now()->format('Y-m-d'),
+                        'dateTo' => $dateTo,
                         'key' => $token,
-                        'limit' => 100,
+                        'limit' => $limit,
                         'page' => $currentPage,
                     ]);
 
